@@ -91,6 +91,11 @@ Prévu : hypothèses de coût par e-mail et de marge, comparaison de politiques 
 
 Prévu : extraire les briques stabilisées dans un package `campaignlift/` (comme `lol_assistant/`), et rédiger la recommandation finale.
 
+## Dépôt Git / GitHub
+
+- Dépôt : [github.com/mimouniahmed/CampaignLift](https://github.com/mimouniahmed/CampaignLift), remote `origin` en SSH (`git@github.com:mimouniahmed/CampaignLift.git`), branche `main`.
+- Sur cette machine Windows, l'accès SSH passe par la clé `~/.ssh/gitcreteil` (déclarée dans `~/.ssh/config`), la même que pour LOL-assistant.
+
 ## Reprendre le projet sur une nouvelle machine
 
 Ce qui **suit le dépôt Git** : le code, les notebooks, ce README, `.gitignore`, `requirements.txt`.
@@ -98,10 +103,11 @@ Ce qui **suit le dépôt Git** : le code, les notebooks, ce README, `.gitignore`
 Ce qui **ne suit pas le dépôt** (exclu par `.gitignore`) :
 1. **`data/hillstrom.csv`** — se re-télécharge en une commande (voir ci-dessous), aucune donnée privée.
 2. **`.venv/`** — à recréer.
-3. **L'historique de conversation et la mémoire Claude Code** — locaux à la machine ; ce README sert de filet de sécurité.
+3. **La clé SSH pour push/pull sur GitHub** — générer une clé (`ssh-keygen`) et l'ajouter sur [github.com/settings/ssh/new](https://github.com/settings/ssh/new).
+4. **L'historique de conversation et la mémoire Claude Code** — locaux à la machine ; ce README sert de filet de sécurité.
 
 ```bash
-git clone <url-du-dépôt>
+git clone git@github.com:mimouniahmed/CampaignLift.git
 cd CampaignLift
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt     # Linux/macOS : .venv/bin/python
