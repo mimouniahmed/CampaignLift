@@ -50,8 +50,8 @@ CSV brut → exploration + vérification de la randomisation → tests A/B (effe
 | 0. Mise en place (venv, données, README) | ✅ Terminée |
 | 1. Exploration + vérification de la randomisation | ✅ Terminée — randomisation validée |
 | 2. Tests statistiques (effet moyen du traitement) | ✅ Terminée — les deux e-mails ont un effet significatif ; Hommes > Femmes |
-| 3. Analyse de puissance | 🚧 En cours |
-| 4. Modèles d'uplift | ⏳ À faire |
+| 3. Analyse de puissance | ✅ Terminée — MDE : visite +8 %, conversion +39 %, dépense +50 % |
+| 4. Modèles d'uplift | 🚧 En cours |
 | 5. Politique de ciblage + ROI | ⏳ À faire |
 | 6. Industrialisation (package `campaignlift/`) + rapport final | ⏳ À faire |
 
@@ -109,9 +109,28 @@ Fichier : [`notebooks/02_ab_tests.ipynb`](notebooks/02_ab_tests.ipynb)
 - **Ajustement par covariables** (ANCOVA / logique CUPED, MCO + erreurs standard robustes HC1) : effets inchangés, erreur standard réduite de seulement **0,1 à 1,4 %**, car les covariables prédisent très mal le résultat à 2 semaines (R² ≈ 0,001 pour la dépense ; corrélation `history`↔`spend` = 0,022). Les estimations simples restent la référence.
 - **Hétérogénéité (aperçu)** par profil d'achat passé (`docs/figures/02_heterogeneite_profil.png`) : chez les « femmes seulement », les deux e-mails font jeu égal (≈ +0,62 $) ; chez les clients achetant pour hommes, l'e-mail Femmes n'a pas d'effet net, l'e-mail Hommes si (+1,83 $ chez les acheteurs mixtes, IC large). Test d'interaction e-mail Femmes × `mens` : −0,38 $, p = 0,14 (non significatif seul) → motive les modèles d'uplift.
 
-## Phase 3 — Analyse de puissance ⏳ À faire
+## Phase 3 — Analyse de puissance ✅ Terminée
 
-Prévu : effet minimal détectable (MDE) avec cette taille d'échantillon, taille d'échantillon nécessaire pour détecter un effet donné, explication de pourquoi la conversion (événement rare) est bien plus difficile à tester que la visite.
+Fichier : [`notebooks/03_power_analysis.ipynb`](notebooks/03_power_analysis.ipynb)
+
+**Résultats** (n = 21 306 par groupe, α = 5 % bilatéral, puissance 80 %) :
+
+| Métrique | Niveau contrôle | MDE corrigée | MDE relative | n / groupe pour +10 % |
+|---|---|---|---|---|
+| Visite | 10,62 % | +0,85 pt | +8 % | ≈ 14 000 |
+| Conversion | 0,573 % | +0,22 pt | +39 % | ≈ 290 000 |
+| Dépense | 0,653 $ | +0,33 $ | +50 % | ≈ 500 000 |
+
+**Démarche et décisions** :
+- Formule de manuel MDE ≈ 2,8 × erreur standard (variances égales, celle du contrôle), vérifiée contre `statsmodels.stats.power.NormalIndPower`.
+- **Simulation Monte-Carlo** (20 000 expériences binomiales, graine 42) : 5,3 % de faux positifs sous H₀ (OK), mais seulement **73,8 % de puissance** à la MDE « de manuel » de la conversion au lieu de 80 %. Cause : la variance p(1−p) augmente avec le taux sous traitement, ce qui n'est pas négligeable pour un événement rare.
+- **Formule corrigée** (variance sous H₀ avec proportion commune pour le seuil, variance sous H₁ pour la dispersion ; pour la dépense, σ_T² ≈ σ_C² × (1 + lift), vérifié sur les données : 292 prédit contre 315 observé pour Hommes, 222 contre 229 pour Femmes) ; MDE et n résolus numériquement (`scipy.optimize.brentq`). Validée par simulation : 80,6 % de rejets à la MDE corrigée. **C'est la formule utilisée partout ensuite.**
+- Coefficients de variation σ/moyenne : 2,9 (visite), 13 (conversion), 18 (dépense) → explique l'écart de MDE entre métriques. Le choix de la métrique principale change le coût d'un test d'un facteur 20 à 35.
+- « Puissance observée » montrée avec la mise en garde de Hoenig & Heisey (2001) : transformation de la p-value, pas une information nouvelle. Effet e-mail Femmes sur la dépense = 1,3 × MDE : détectable, sans grande marge.
+- **Sous-groupes** : l'interaction e-mail Femmes × `mens` de la phase 2 (−0,375 $, erreur std 0,257) n'avait que **31 %** de puissance ; MDE de l'interaction 0,72 $ ; il faudrait ≈ 3,7× plus de clients (≈ 235 000). Le « non significatif » de la phase 2 est non concluant.
+- Figures : `docs/figures/03_courbes_puissance.png`, `docs/figures/03_taille_echantillon.png`.
+
+**Conséquence pour la phase 4** : les effets individuels sont petits face au bruit, donc les modèles d'uplift seront bruités. Il faut les évaluer sur un jeu de test séparé (courbes d'uplift / Qini) et privilégier la conversion (et la visite) comme signal plutôt que la dépense brute.
 
 ## Phase 4 — Modèles d'uplift ⏳ À faire
 
@@ -161,5 +180,6 @@ CampaignLift/
 │   └── hillstrom.csv
 └── notebooks/
     ├── 01_exploration.ipynb
-    └── 02_ab_tests.ipynb
+    ├── 02_ab_tests.ipynb
+    └── 03_power_analysis.ipynb
 ```
