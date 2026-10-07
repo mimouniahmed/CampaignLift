@@ -52,8 +52,8 @@ CSV brut → exploration + vérification de la randomisation → tests A/B (effe
 | 2. Tests statistiques (effet moyen du traitement) | ✅ Terminée — les deux e-mails ont un effet significatif ; Hommes > Femmes |
 | 3. Analyse de puissance | ✅ Terminée — MDE : visite +8 %, conversion +39 %, dépense +50 % |
 | 4. Modèles d'uplift | ✅ Terminée — e-mail Femmes hétérogène (ciblable), e-mail Hommes homogène |
-| 5. Politique de ciblage + ROI | 🚧 En cours |
-| 6. Industrialisation (package `campaignlift/`) + rapport final | ⏳ À faire |
+| 5. Politique de ciblage + ROI | ✅ Terminée — e-mail Hommes à tous : +18 100 $ de profit / 100 000 clients, ROI ≈ 3,6 |
+| 6. Industrialisation (package `campaignlift/`) + rapport final | 🚧 En cours |
 
 ## Phase 0 — Mise en place ✅ Terminée
 
@@ -172,9 +172,36 @@ Fichier : [`notebooks/04_uplift_models.ipynb`](notebooks/04_uplift_models.ipynb)
 - **Dépense** : uplift de conversion × panier moyen (116,4 $) classe mieux sur la dépense (Qini 0,25 pour Femmes) qu'un T-learner entraîné directement sur `spend` (0,20 ; négatif pour Hommes). C'est l'option retenue pour la phase 5.
 - Prédictions hors échantillon sauvegardées dans `data/uplift_predictions.csv` (non versionné, régénéré par le notebook).
 
-## Phase 5 — Politique de ciblage + ROI ⏳ À faire
+## Phase 5 — Politique de ciblage + ROI ✅ Terminée
 
-Prévu : hypothèses de coût par e-mail et de marge, comparaison de politiques (personne / tout le monde / meilleur e-mail par client selon l'uplift / top-k %), gain attendu en $ avec intervalle de confiance.
+Fichier : [`notebooks/05_targeting_roi.ipynb`](notebooks/05_targeting_roi.ipynb) (lit `data/uplift_predictions.csv` produit par le notebook 04)
+
+**Hypothèses économiques** (externes au jeu de données, testées en sensibilité) : **marge brute 30 %** du chiffre d'affaires (plage 10-60 %), **coût complet 0,05 $ par e-mail** (envoi + création + coût de désabonnement/fatigue ; plage 0-0,50 $). Profit(π) = marge × E[spend | π] − coût × part contactée.
+
+**Évaluation hors politique** : estimateur stratifié par action (IPW normalisé de Hájek), valide grâce à la randomisation et aux prédictions hors échantillon. Vérifié : il redonne exactement la moyenne du groupe pour une politique uniforme. Intervalles par **bootstrap apparié** (1 000 rééchantillonnages, graine 42 ; prédictions gardées fixes, donc IC légèrement optimistes pour les politiques d'uplift).
+
+**Politiques comparées** (pour 100 000 clients, marge 30 %, coût 0,05 $) :
+
+| Politique | Profit incrémental vs aucun envoi | vs « tous Hommes » |
+|---|---|---|
+| Tous : e-mail Hommes | **+18 100 $** [9 500 ; 26 500] | — |
+| Tous : e-mail Femmes | +7 700 $ [0 ; 15 000] | −10 400 $ [−19 100 ; −500] |
+| Uplift naïf (modèles Hommes + Femmes) | +16 800 $ [8 700 ; 24 300] | −1 300 $ [−6 200 ; +4 000] |
+| **Hybride** (ATE Hommes + modèle Femmes ; 21 % basculent vers l'e-mail Femmes) | +20 400 $ [10 800 ; 29 100] | +2 300 $ [−1 600 ; +6 700] |
+
+- **L'uplift naïf ne fait pas mieux que l'envoi à tous** : il se fie à l'hétérogénéité inventée du modèle Hommes (phase 4). Principe retenu : n'utiliser une estimation individualisée que si elle est validée hors échantillon, sinon la moyenne.
+- **Seuil de rentabilité** de l'e-mail Hommes : coût < 0,77 $ × marge (≈ 0,23 $ à 30 %). Au-delà, aucune politique ne bat clairement « personne » : pas de niche rentable trouvée (`docs/figures/05_profit_selon_cout.png`).
+- **Sensibilité** marge × coût (`docs/figures/05_sensibilite.png`) : la meilleure politique uniforme est toujours « Hommes à tous » ou « personne », jamais « Femmes ». Le gain de l'hybride se situe entre +800 et +4 600 $ / 100 000 clients quand l'e-mail Hommes est rentable, et devient légèrement négatif près du seuil.
+- **Coût de la preuve** : démontrer le gain de l'hybride (+0,077 $ de CA par client) demanderait ≈ 720 000 clients par bras, soit environ 34× un groupe de cette expérience. C'est indémontrable en pratique.
+
+**Recommandation** (pour 100 000 clients) :
+1. **Envoyer l'e-mail Hommes à tous** : +77 000 $ de chiffre d'affaires, **+18 100 $ de profit** pour 5 000 $ d'envoi (**ROI ≈ 3,6**). Valable tant que coût/e-mail < 0,77 $ × marge.
+2. **Ne pas cibler l'e-mail Hommes** par un modèle d'uplift (effet homogène).
+3. **Option** : basculer vers l'e-mail Femmes le client sur cinq jugé plus réceptif par le modèle (gros clients sans historique d'achat hommes). Gain ≈ +2 300 $, non démontré : à n'adopter que si produire deux e-mails ne coûte rien de plus.
+4. **Si l'envoi coûte plus que le seuil** (courrier, bon de réduction) : pas de campagne de masse.
+5. **Garder un groupe contrôle** (≈ 10 %) dans les prochaines campagnes, et piloter les tests sur la visite.
+
+**Limites** : hypothèses de marge et de coût externes ; effet mesuré sur 2 semaines (long terme inconnu) ; données de 2008 ; politique hybride conçue après analyse des mêmes données (évaluation légèrement optimiste).
 
 ## Phase 6 — Industrialisation + rapport ⏳ À faire
 
@@ -218,5 +245,6 @@ CampaignLift/
     ├── 01_exploration.ipynb
     ├── 02_ab_tests.ipynb
     ├── 03_power_analysis.ipynb
-    └── 04_uplift_models.ipynb
+    ├── 04_uplift_models.ipynb
+    └── 05_targeting_roi.ipynb
 ```
