@@ -48,8 +48,8 @@ CSV brut → exploration + vérification de la randomisation → tests A/B (effe
 | Phase | Statut |
 |---|---|
 | 0. Mise en place (venv, données, README) | ✅ Terminée |
-| 1. Exploration + vérification de la randomisation | 🚧 En cours |
-| 2. Tests statistiques (effet moyen du traitement) | ⏳ À faire |
+| 1. Exploration + vérification de la randomisation | ✅ Terminée — randomisation validée |
+| 2. Tests statistiques (effet moyen du traitement) | 🚧 En cours |
 | 3. Analyse de puissance | ⏳ À faire |
 | 4. Modèles d'uplift | ⏳ À faire |
 | 5. Politique de ciblage + ROI | ⏳ À faire |
@@ -61,7 +61,7 @@ CSV brut → exploration + vérification de la randomisation → tests A/B (effe
 - Noyau Jupyter enregistré sous le nom **`campaignlift`** (« Python (campaignlift) ») — à sélectionner dans VSCode pour les notebooks.
 - Données téléchargées dans `data/hillstrom.csv` (64 000 lignes + en-tête).
 
-## Phase 1 — Exploration + vérification de la randomisation 🚧 En cours
+## Phase 1 — Exploration + vérification de la randomisation ✅ Terminée
 
 Fichier : [`notebooks/01_exploration.ipynb`](notebooks/01_exploration.ipynb)
 
@@ -72,8 +72,20 @@ Objectifs :
    - ✅ Fait — test du χ² d'ajustement (`scipy.stats.chisquare`) contre une répartition 1/3 – 1/3 – 1/3 : effectifs 21 387 / 21 307 / 21 306, χ² = 0,203 (2 ddl), **p = 0,904** → aucun *sample ratio mismatch*. Seuil retenu pour ce contrôle : 0,001, une convention courante pour un test de *sample ratio mismatch* qui évite les fausses alertes.
 3. Vérifier l'**équilibre des covariables** entre groupes (tests du χ², différences standardisées) : c'est ce qui justifie d'interpréter les différences de résultats comme **causales**.
    - ✅ Tests du χ² d'indépendance (`scipy.stats.chi2_contingency`) groupe × covariable, sur `recency` (traitée comme catégorielle, 12 valeurs), `history_segment`, `mens`, `womens`, `zip_code`, `newbie`, `channel` : toutes les p-values sont ≥ 0,358 (minimum atteint sur `history_segment`) → aucun déséquilibre détecté. Point de vigilance noté : 7 tests simultanés, donc environ 0,35 faux positif attendu à 5 % (comparaisons multiples).
-   - ⏳ Différences standardisées (SMD) : à faire. Elles mesurent l'ampleur d'un déséquilibre plutôt que sa significativité, ce qui compte avec n = 64 000. Elles couvriront aussi `history` en continu.
+   - ✅ Différences standardisées (SMD, variance poolée, catégorielles en indicatrices 0/1), chaque groupe traité vs `No E-Mail`, sur 11 colonnes dont `history` en continu : |SMD| max = **0,014** (`zip_code_Rural`, e-mail Hommes), soit 7× sous le seuil usuel de 0,1 (Austin, 2009). Visualisé par un *love plot* (`docs/figures/01_love_plot.png`).
+   - Pourquoi les deux outils : la p-value mélange ampleur et taille d'échantillon (avec n = 64 000, tout écart finit par être « significatif ») ; la SMD ne mesure que l'ampleur.
 4. Premier coup d'œil aux taux de visite / conversion / dépense par groupe.
+   - ✅ Fait (`docs/figures/01_resultats_par_groupe.png`) :
+
+     | Groupe | Visite | Conversion | Dépense moyenne |
+     |---|---|---|---|
+     | No E-Mail | 10,62 % | 0,573 % | 0,653 $ |
+     | Mens E-Mail | 18,28 % | 1,253 % | 1,423 $ |
+     | Womens E-Mail | 15,14 % | 0,884 % | 1,077 $ |
+
+   - **Forme de `spend`** : 99,10 % de zéros (578 acheteurs sur 64 000), montants de 30 $ à 499 $ chez les acheteurs (moyenne ≈ 114–122 $ selon le groupe). Variable **zéro-inflatée** et très asymétrique → conditionne le choix des tests en phase 2.
+
+**Conclusion** : la randomisation a fonctionné (pas de *sample ratio mismatch*, covariables équilibrées), donc les écarts de résultats entre groupes s'interprètent comme des **effets causaux** des e-mails. Elle équilibre aussi en espérance les variables *non observées*, ce qu'aucune méthode observationnelle ne garantit.
 
 ## Phase 2 — Tests statistiques ⏳ À faire
 
