@@ -51,8 +51,8 @@ CSV brut → exploration + vérification de la randomisation → tests A/B (effe
 | 1. Exploration + vérification de la randomisation | ✅ Terminée — randomisation validée |
 | 2. Tests statistiques (effet moyen du traitement) | ✅ Terminée — les deux e-mails ont un effet significatif ; Hommes > Femmes |
 | 3. Analyse de puissance | ✅ Terminée — MDE : visite +8 %, conversion +39 %, dépense +50 % |
-| 4. Modèles d'uplift | 🚧 En cours |
-| 5. Politique de ciblage + ROI | ⏳ À faire |
+| 4. Modèles d'uplift | ✅ Terminée — e-mail Femmes hétérogène (ciblable), e-mail Hommes homogène |
+| 5. Politique de ciblage + ROI | 🚧 En cours |
 | 6. Industrialisation (package `campaignlift/`) + rapport final | ⏳ À faire |
 
 ## Phase 0 — Mise en place ✅ Terminée
@@ -132,9 +132,45 @@ Fichier : [`notebooks/03_power_analysis.ipynb`](notebooks/03_power_analysis.ipyn
 
 **Conséquence pour la phase 4** : les effets individuels sont petits face au bruit, donc les modèles d'uplift seront bruités. Il faut les évaluer sur un jeu de test séparé (courbes d'uplift / Qini) et privilégier la conversion (et la visite) comme signal plutôt que la dépense brute.
 
-## Phase 4 — Modèles d'uplift ⏳ À faire
+## Phase 4 — Modèles d'uplift ✅ Terminée
 
-Prévu : S-learner, T-learner, transformation de la cible (*class transformation*), éventuellement X-learner ; évaluation par courbes d'uplift / Qini et AUUC sur un jeu de test. Comparaison avec un modèle de réponse classique pour montrer la différence.
+Fichier : [`notebooks/04_uplift_models.ipynb`](notebooks/04_uplift_models.ipynb)
+
+**Objectif** : estimer l'effet individuel conditionnel τ(x) (CATE) de chaque e-mail, c'est-à-dire trouver les « persuadables », pas les clients qui achèteraient de toute façon.
+
+**Protocole d'évaluation (décisions)** :
+- **Cross-fitting en 5 plis** stratifiés (groupe × conversion) : chaque client reçoit une prédiction hors échantillon, et l'évaluation porte sur les 64 000 clients. Un jeu de test à 30 % n'aurait eu que 40 à 80 acheteurs par groupe (cf. phase 3).
+- **Qini normalisé** = moyenne de (Q(k) − diagonale) / Q(n), avec Q(k) = Y_T(k) − Y_C(k)·N_T(k)/N_C(k) (Radcliffe, 2007). Chaque e-mail est évalué contre le contrôle séparément.
+- **Distribution nulle par permutation** (500 classements aléatoires) → p-value empirique. Indispensable : l'écart-type du Qini sous le hasard (≈ 0,04 pour la conversion) est du même ordre que les scores des modèles médiocres.
+- Modèles de base : XGBoost peu profond et régularisé (200 arbres, profondeur 3, lr 0,03, `min_child_weight` 20 pour la classification et 50 pour la régression).
+
+**Modèles comparés** (cible : conversion) : modèle de réponse (baseline, mauvaise méthode), S-learner, T-learner (XGBoost et logistique), transformation de cible (Athey & Imbens, 2015), X-learner (Künzel et al., 2019).
+
+**Résultats** :
+
+| Qini conversion (p) | E-mail Hommes | E-mail Femmes |
+|---|---|---|
+| Modèle de réponse | 0,024 (0,30) | 0,135 (0,06) |
+| S-learner XGBoost | 0,006 (0,46) | 0,256 (0,002) |
+| **T-learner XGBoost** | −0,014 (0,66) | **0,295 (0,002)** |
+| T-learner logistique | −0,038 (0,84) | 0,216 (0,008) |
+| Transformation de cible | −0,035 (0,82) | 0,165 (0,02) |
+| X-learner | −0,030 (0,77) | 0,156 (0,03) |
+
+- **E-mail Femmes : effet hétérogène, bien capté.** Le T-learner XGBoost cible 45 % des clients et récolte la quasi-totalité de l'effet (`docs/figures/04_courbes_qini.png`). Stable sur 3 graines de découpage (0,295 à 0,316).
+- **E-mail Hommes : effet homogène.** Aucun modèle ne bat le hasard. Le diagramme par déciles (`docs/figures/04_uplift_deciles.png`) montre un uplift *prédit* de 1,6 à 0,1 point, mais un uplift *observé* plat : le modèle invente de l'hétérogénéité à partir du bruit.
+- **Robustesse** : un T-learner trop régularisé (100 arbres, profondeur 2, feuilles ≥ 100) prédit un uplift quasi constant (écart-type 0,01 pt contre 0,49) et perd tout le signal.
+- **Explication** par arbre substitut de profondeur 2 sur l'uplift prédit de l'e-mail Femmes (R² = 0,46), vérifiée sur l'uplift **observé** brut de chaque segment :
+
+  | Segment | Clients | Uplift conv. prédit (Femmes) | Observé Femmes | Observé Hommes |
+  |---|---|---|---|---|
+  | `history` > 500 $, `recency` ≤ 2 | 3 740 | +1,20 pt | +1,29 pt | +1,15 pt |
+  | `history` > 500 $, `recency` > 2 | 4 340 | +0,78 pt | +0,73 pt | +1,12 pt |
+  | `history` ≤ 500 $, pas d'achat hommes | 26 083 | +0,44 pt | +0,46 pt | +0,48 pt |
+  | `history` ≤ 500 $, achat hommes | 29 837 | +0,02 pt | −0,01 pt | +0,73 pt |
+
+- **Dépense** : uplift de conversion × panier moyen (116,4 $) classe mieux sur la dépense (Qini 0,25 pour Femmes) qu'un T-learner entraîné directement sur `spend` (0,20 ; négatif pour Hommes). C'est l'option retenue pour la phase 5.
+- Prédictions hors échantillon sauvegardées dans `data/uplift_predictions.csv` (non versionné, régénéré par le notebook).
 
 ## Phase 5 — Politique de ciblage + ROI ⏳ À faire
 
@@ -181,5 +217,6 @@ CampaignLift/
 └── notebooks/
     ├── 01_exploration.ipynb
     ├── 02_ab_tests.ipynb
-    └── 03_power_analysis.ipynb
+    ├── 03_power_analysis.ipynb
+    └── 04_uplift_models.ipynb
 ```
