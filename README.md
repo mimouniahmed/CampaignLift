@@ -5,14 +5,18 @@ Projet éducatif : analyser, étape par étape, une **expérience marketing rand
 ## Ce que le projet produira (et ne produira pas)
 
 - **Question métier** : *l'e-mailing vaut-il le coup, pour qui, et combien rapporte-t-il ?*
-- **Sortie finale** : une recommandation de ciblage (qui recevoir l'e-mail, lequel) avec son gain attendu en dollars par rapport à « tout le monde » et « personne ».
+- **Sortie finale** : une recommandation de ciblage (qui doit recevoir l'e-mail, et lequel) avec son gain attendu en dollars par rapport à « tout le monde » et « personne ».
 - **Ce que ce n'est pas** : on ne prédit pas *qui achète* (modèle de réponse classique), mais *qui achète **à cause** de l'e-mail* (effet causal individuel). Toute la différence du projet est là.
+
+## Résultat en une phrase
+
+**Envoyer l'e-mail Hommes à tous les clients** : +0,77 $ de chiffre d'affaires par client. Pour 100 000 clients, cela fait **+18 100 $ de profit** pour 5 000 $ d'envoi (ROI ≈ 3,6, avec une marge de 30 % et 0,05 $ par e-mail), valable tant que le coût par e-mail reste sous 0,77 $ × marge. L'effet de l'e-mail Hommes est homogène, donc le cibler n'apporte rien. L'e-mail Femmes est ciblable, mais le gain de la personnalisation (≈ +2 300 $) est trop petit pour être démontré. Détails : [`docs/rapport.md`](docs/rapport.md).
 
 ## Méthode de travail
 
 - Tout est développé en **notebooks Jupyter**, un concept par cellule, exécuté et observé avant de passer au suivant.
 - Chaque bout de code est expliqué dans la conversation avant/au moment de l'écrire (pas seulement en commentaire) — l'utilisateur veut comprendre chaque brique, pas se faire livrer du code.
-- Le projet avance par phases, chacune validée avant de passer à la suivante.
+- Le projet avance par phases, chacune validée avant de passer à la suivante (jusqu'au 2026-10-07, où l'utilisateur a demandé de terminer le projet en autonomie, voir phase 6).
 - **Ce README est tenu exhaustif en permanence** : c'est le seul artefact qui voyage avec le dépôt Git et qui reste lisible sans l'historique de conversation (utile pour reprendre le projet sur une autre machine).
 - Même approche que le projet LOL-assistant : notebooks d'abord, industrialisation en package Python une fois les briques stabilisées.
 
@@ -43,7 +47,7 @@ CSV brut → exploration + vérification de la randomisation → tests A/B (effe
         → analyse de puissance → modèles d'uplift (effet individuel) → politique de ciblage + ROI
 ```
 
-## Statut global (2026-10-01)
+## Statut global (2026-10-07) — projet terminé
 
 | Phase | Statut |
 |---|---|
@@ -53,7 +57,7 @@ CSV brut → exploration + vérification de la randomisation → tests A/B (effe
 | 3. Analyse de puissance | ✅ Terminée — MDE : visite +8 %, conversion +39 %, dépense +50 % |
 | 4. Modèles d'uplift | ✅ Terminée — e-mail Femmes hétérogène (ciblable), e-mail Hommes homogène |
 | 5. Politique de ciblage + ROI | ✅ Terminée — e-mail Hommes à tous : +18 100 $ de profit / 100 000 clients, ROI ≈ 3,6 |
-| 6. Industrialisation (package `campaignlift/`) + rapport final | 🚧 En cours |
+| 6. Industrialisation (package `campaignlift/`) + rapport final | ✅ Terminée — package, CLI, 17 tests, [`docs/rapport.md`](docs/rapport.md) |
 
 ## Phase 0 — Mise en place ✅ Terminée
 
@@ -203,9 +207,25 @@ Fichier : [`notebooks/05_targeting_roi.ipynb`](notebooks/05_targeting_roi.ipynb)
 
 **Limites** : hypothèses de marge et de coût externes ; effet mesuré sur 2 semaines (long terme inconnu) ; données de 2008 ; politique hybride conçue après analyse des mêmes données (évaluation légèrement optimiste).
 
-## Phase 6 — Industrialisation + rapport ⏳ À faire
+## Phase 6 — Industrialisation + rapport ✅ Terminée
 
-Prévu : extraire les briques stabilisées dans un package `campaignlift/` (comme `lol_assistant/`), et rédiger la recommandation finale.
+**Rapport de synthèse** : [`docs/rapport.md`](docs/rapport.md). C'est la version courte, orientée décision, de tout le projet (résultats, recommandation, limites, figures).
+
+**Package `campaignlift/`** (installé en mode éditable avec `pip install -e .`, comme `lol_assistant/`). Il reprend les briques stabilisées des notebooks, une par module :
+- `data.py` — `charger()` (télécharge le CSV s'il manque), `matrice_covariables()`, `codes_traitement()` (0 = aucun, 1 = Hommes, 2 = Femmes), `panier_moyen()`.
+- `experiment.py` — `test_sample_ratio()`, `smd()` / `equilibre_covariables()`, `z_test_proportions()`, `test_welch()`, `bootstrap_difference()`, `effets_moyens()`.
+- `power.py` — formules **corrigées** `puissance_proportion()`, `puissance_depense()`, `mde()`, `n_necessaire()`, plus `mde_manuel()` pour comparaison.
+- `uplift.py` — `t_learner()` en cross-fitting (XGBoost régularisé), `courbe_qini()`, `qini_normalise()`, `evaluer()`, `p_value_permutation()`. Seul le T-learner, retenu en phase 4, est industrialisé.
+- `policy.py` — `valeur_politique()` (estimateur stratifié de Hájek), `profit()`, `meilleure_action()`, `politiques()`, `comparer()` (bootstrap apparié).
+- `cli.py` + `__main__.py` — commande **`campaignlift`** (ou `python -m campaignlift`) qui rejoue l'analyse complète et affiche la recommandation. Options : `--marge`, `--cout`, `--base`, `--n-boot`, `--permutations`, `--donnees`. Au-dessus du seuil de rentabilité, elle recommande de ne pas faire de campagne. Durée ≈ 1 min.
+
+**Tests** (`pytest`, 17 tests, ≈ 7 s) :
+- `tests/test_unitaires.py` (sur données synthétiques) : z-test identique à statsmodels, bootstrap ≈ Welch, MDE ↔ puissance 80 %, formule corrigée validée par simulation, Qini d'un oracle positif et d'un classement aléatoire ≈ 0, estimateur de politique sans biais (résultats potentiels connus).
+- `tests/test_reproduction.py` (sauté si `data/hillstrom.csv` est absent) : le package **reproduit exactement les chiffres des notebooks** (p du SRM = 0,904, |SMD| max = 0,0137, ATE, MDE, Qini 0,295, profit +18 095 $, gain de l'hybride +2 305 $).
+
+**Décision : les notebooks restent des artefacts pédagogiques autonomes.** Contrairement au notebook 02 de LOL-assistant, ils n'importent pas le package. Leur but est de montrer chaque calcul pas à pas (z-test codé à la main, simulation qui révèle le défaut de la formule de manuel, etc.). La cohérence entre notebooks et package est garantie par `tests/test_reproduction.py`.
+
+**Changement de méthode le 2026-10-07** : à la demande de l'utilisateur (« finis ce projet seul, sans mes validations »), les phases 1 (fin) à 6 ont été menées d'une traite par Claude Code, sans validation intermédiaire. Le style pédagogique des notebooks (un concept par cellule, explications en markdown) a été conservé.
 
 ## Dépôt Git / GitHub
 
@@ -214,10 +234,10 @@ Prévu : extraire les briques stabilisées dans un package `campaignlift/` (comm
 
 ## Reprendre le projet sur une nouvelle machine
 
-Ce qui **suit le dépôt Git** : le code, les notebooks, ce README, `.gitignore`, `requirements.txt`.
+Ce qui **suit le dépôt Git** : le package `campaignlift/`, les tests, `pyproject.toml`, les notebooks, les figures (`docs/figures/`), le rapport, ce README, `.gitignore`, `requirements.txt`.
 
 Ce qui **ne suit pas le dépôt** (exclu par `.gitignore`) :
-1. **`data/hillstrom.csv`** — se re-télécharge en une commande (voir ci-dessous), aucune donnée privée.
+1. **`data/hillstrom.csv`** — se re-télécharge en une commande (voir ci-dessous), ou automatiquement au premier lancement de `campaignlift`. Aucune donnée privée. `data/uplift_predictions.csv` est régénéré par le notebook 04 (nécessaire au notebook 05).
 2. **`.venv/`** — à recréer.
 3. **La clé SSH pour push/pull sur GitHub** — générer une clé (`ssh-keygen`) et l'ajouter sur [github.com/settings/ssh/new](https://github.com/settings/ssh/new).
 4. **L'historique de conversation et la mémoire Claude Code** — locaux à la machine ; ce README sert de filet de sécurité.
@@ -227,9 +247,12 @@ git clone git@github.com:mimouniahmed/CampaignLift.git
 cd CampaignLift
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt     # Linux/macOS : .venv/bin/python
+.venv/Scripts/python -m pip install -e .                    # installe le package campaignlift/ en mode éditable
 .venv/Scripts/python -m ipykernel install --user --name campaignlift --display-name "Python (campaignlift)"
 mkdir data
 curl -L -o data/hillstrom.csv "http://www.minethatdata.com/Kevin_Hillstrom_MineThatData_E-MailAnalytics_DataMiningChallenge_2008.03.20.csv"
+.venv/Scripts/python -m pytest                               # 17 tests
+.venv/Scripts/campaignlift --marge 0.30 --cout 0.05          # rejoue l'analyse complète
 ```
 
 ## Structure du projet
@@ -237,10 +260,27 @@ curl -L -o data/hillstrom.csv "http://www.minethatdata.com/Kevin_Hillstrom_MineT
 ```
 CampaignLift/
 ├── README.md
+├── pyproject.toml
 ├── requirements.txt
 ├── .gitignore
+├── campaignlift/              # package (pip install -e .)
+│   ├── __init__.py
+│   ├── __main__.py            # python -m campaignlift
+│   ├── cli.py                 # commande `campaignlift`
+│   ├── data.py
+│   ├── experiment.py
+│   ├── power.py
+│   ├── uplift.py
+│   └── policy.py
+├── tests/
+│   ├── test_unitaires.py
+│   └── test_reproduction.py
+├── docs/
+│   ├── rapport.md             # synthèse et recommandation
+│   └── figures/               # graphiques produits par les notebooks
 ├── data/                      # non versionné
-│   └── hillstrom.csv
+│   ├── hillstrom.csv
+│   └── uplift_predictions.csv # produit par le notebook 04
 └── notebooks/
     ├── 01_exploration.ipynb
     ├── 02_ab_tests.ipynb
