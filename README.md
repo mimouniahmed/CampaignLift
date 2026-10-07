@@ -49,8 +49,8 @@ CSV brut → exploration + vérification de la randomisation → tests A/B (effe
 |---|---|
 | 0. Mise en place (venv, données, README) | ✅ Terminée |
 | 1. Exploration + vérification de la randomisation | ✅ Terminée — randomisation validée |
-| 2. Tests statistiques (effet moyen du traitement) | 🚧 En cours |
-| 3. Analyse de puissance | ⏳ À faire |
+| 2. Tests statistiques (effet moyen du traitement) | ✅ Terminée — les deux e-mails ont un effet significatif ; Hommes > Femmes |
+| 3. Analyse de puissance | 🚧 En cours |
 | 4. Modèles d'uplift | ⏳ À faire |
 | 5. Politique de ciblage + ROI | ⏳ À faire |
 | 6. Industrialisation (package `campaignlift/`) + rapport final | ⏳ À faire |
@@ -87,9 +87,27 @@ Objectifs :
 
 **Conclusion** : la randomisation a fonctionné (pas de *sample ratio mismatch*, covariables équilibrées), donc les écarts de résultats entre groupes s'interprètent comme des **effets causaux** des e-mails. Elle équilibre aussi en espérance les variables *non observées*, ce qu'aucune méthode observationnelle ne garantit.
 
-## Phase 2 — Tests statistiques ⏳ À faire
+## Phase 2 — Tests statistiques ✅ Terminée
 
-Prévu : test de différence de proportions (z-test) sur visite/conversion, Welch t-test et bootstrap sur la dépense (distribution très asymétrique, majoritairement des zéros), intervalles de confiance, correction pour comparaisons multiples (3 groupes × 3 métriques), régression avec covariables (CUPED / ANCOVA) pour réduire la variance.
+Fichier : [`notebooks/02_ab_tests.ipynb`](notebooks/02_ab_tests.ipynb)
+
+**Estimand** : l'effet moyen du traitement (ATE), estimé sans biais par une simple différence de moyennes grâce à la randomisation.
+
+**Résultats** (chaque e-mail vs `No E-Mail`) :
+
+| | E-mail Hommes | E-mail Femmes |
+|---|---|---|
+| Visite | +7,66 pts [6,99 ; 8,32] (10,62 % → 18,28 %, +72 %) | +4,52 pts [3,89 ; 5,16] (→ 15,14 %, +43 %) |
+| Conversion | +0,68 pt [0,50 ; 0,86] (0,573 % → 1,253 %, +119 %) | +0,31 pt [0,15 ; 0,47] (→ 0,884 %, +54 %) |
+| Dépense / client | +0,77 $ [0,49 ; 1,05] (+118 %) | +0,42 $ [0,17 ; 0,68] (+65 %) |
+
+**Méthodes et décisions** :
+- **Proportions** : z-test de deux proportions codé à la main (proportion commune sous H₀ pour le test, variances séparées pour l'IC), vérifié contre `statsmodels.stats.proportion.proportions_ztest` (z identique : 7,3851).
+- **Dépense** : test de **Welch** (pas de Student : pas d'hypothèse de variances égales). Validité malgré 99 % de zéros vérifiée par **bootstrap percentile** (5 000 rééchantillonnages, graine 42) : IC quasi identiques (Hommes : Welch [0,485 ; 1,055] vs bootstrap [0,479 ; 1,049]) → le TCL tient à n ≈ 21 000 (`docs/figures/02_bootstrap_spend.png`).
+- **Décomposition** dépense = P(conversion) × panier moyen : chez les acheteurs, le panier moyen ne diffère pas (p = 0,97 Hommes, p = 0,51 Femmes ; ≈ 114 $). L'effet passe par le **nombre d'acheteurs**. Mise en garde notée : comparer les acheteurs entre groupes est une comparaison post-traitement, non randomisée (biais de sélection).
+- **Comparaisons multiples** : 9 tests (2 e-mails × 3 métriques + Hommes vs Femmes × 3), corrections **Holm** (FWER, retenue) et Benjamini-Hochberg (FDR, montrée) : les 9 restent significatives. Hommes > Femmes nettement sur visite/conversion, **de justesse sur la dépense** (+0,35 $, p = 0,03).
+- **Ajustement par covariables** (ANCOVA / logique CUPED, MCO + erreurs standard robustes HC1) : effets inchangés, erreur standard réduite de seulement **0,1 à 1,4 %**, car les covariables prédisent très mal le résultat à 2 semaines (R² ≈ 0,001 pour la dépense ; corrélation `history`↔`spend` = 0,022). Les estimations simples restent la référence.
+- **Hétérogénéité (aperçu)** par profil d'achat passé (`docs/figures/02_heterogeneite_profil.png`) : chez les « femmes seulement », les deux e-mails font jeu égal (≈ +0,62 $) ; chez les clients achetant pour hommes, l'e-mail Femmes n'a pas d'effet net, l'e-mail Hommes si (+1,83 $ chez les acheteurs mixtes, IC large). Test d'interaction e-mail Femmes × `mens` : −0,38 $, p = 0,14 (non significatif seul) → motive les modèles d'uplift.
 
 ## Phase 3 — Analyse de puissance ⏳ À faire
 
@@ -142,5 +160,6 @@ CampaignLift/
 ├── data/                      # non versionné
 │   └── hillstrom.csv
 └── notebooks/
-    └── 01_exploration.ipynb
+    ├── 01_exploration.ipynb
+    └── 02_ab_tests.ipynb
 ```
