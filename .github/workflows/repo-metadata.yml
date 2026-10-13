@@ -1,0 +1,28 @@
+name: repo-metadata
+
+# Met à jour la section « About » du dépôt (description et topics).
+# À lancer manuellement (onglet Actions, ou extension VSCode « GitHub Actions »).
+# Nécessite le secret REPO_ADMIN_TOKEN : jeton à granularité fine limité à ce dépôt,
+# permission « Administration : Read and write » (le GITHUB_TOKEN par défaut ne peut pas modifier ces champs).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-about:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Description
+        env:
+          GH_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }}
+        run: |
+          curl -fsS -X PATCH "https://api.github.com/repos/${{ github.repository }}" \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -d '{"description": "Causal analysis of a randomized e-mail campaign (64k customers): A/B testing, power analysis, uplift modeling and ROI-driven targeting."}'
+      - name: Topics
+        env:
+          GH_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }}
+        run: |
+          curl -fsS -X PUT "https://api.github.com/repos/${{ github.repository }}/topics" \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -d '{"names": ["causal-inference", "ab-testing", "uplift-modeling", "experimentation", "marketing-analytics", "python", "xgboost", "statistics"]}'

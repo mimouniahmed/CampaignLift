@@ -1,5 +1,7 @@
 # CampaignLift — Rapport de synthèse
 
+**Français** · [English](report.md)
+
 **Question** : une campagne e-mail vaut-elle le coût de l'envoi, pour quels clients, et combien rapporte-t-elle ?
 
 **Réponse courte** : envoyer l'**e-mail Hommes à tous les clients**. Pour 100 000 clients, cela rapporte environ **+77 000 $ de chiffre d'affaires** et **+18 100 $ de profit**, pour 5 000 $ de coûts d'envoi (**ROI ≈ 3,6**). Ce choix reste valable tant que le coût complet d'un e-mail est inférieur à 0,77 $ × marge, soit ≈ 0,23 $ avec une marge de 30 %. Cibler l'e-mail à l'aide de modèles d'uplift **n'apporte pas de gain démontrable** sur ces données.

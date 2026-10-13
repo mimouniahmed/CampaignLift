@@ -3,6 +3,8 @@
 [![tests](https://github.com/mimouniahmed/CampaignLift/actions/workflows/tests.yml/badge.svg)](https://github.com/mimouniahmed/CampaignLift/actions/workflows/tests.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 
+**Français** · [English](README.en.md)
+
 Analyse de bout en bout d'une **expérience marketing randomisée sur 64 000 clients**. Le parcours va de la validation du protocole jusqu'à une **recommandation de ciblage chiffrée en ROI**, en passant par les tests A/B, l'analyse de puissance et les modèles d'uplift.
 
 **Question métier** : la campagne e-mail est-elle rentable, pour quels clients, et quel e-mail envoyer à chacun ?
@@ -108,6 +110,7 @@ CampaignLift/
 ├── tests/                   # tests unitaires + reproduction des résultats
 ├── docs/
 │   ├── rapport.md           # synthèse orientée décision
+│   ├── report.md            # synthèse (anglais)
 │   ├── methodologie.md      # choix techniques et résultats détaillés
 │   └── figures/
 └── .github/workflows/       # intégration continue
