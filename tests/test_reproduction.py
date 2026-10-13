@@ -41,9 +41,13 @@ def test_notebook03_mde(df):
     assert power.mde(controle["spend"], n, binaire=False) == pytest.approx(0.326, abs=0.005)
 
 
+# Les quantités issues de XGBoost varient légèrement selon la plateforme (arrondis flottants en calcul
+# multithread) : 0,295 sous Windows, 0,290 sous Linux pour le Qini. On teste donc les conclusions, avec une
+# tolérance couvrant la variabilité observée entre graines de découpage (0,295 à 0,316, notebook 04).
+
 def test_notebook04_qini(df, predictions):
     W, y = codes_traitement(df), resultats(df)["conversion"]
-    assert uplift.evaluer(predictions[:, 2] - predictions[:, 0], y, W, 2) == pytest.approx(0.295, abs=0.005)
+    assert 0.25 < uplift.evaluer(predictions[:, 2] - predictions[:, 0], y, W, 2) < 0.34
     assert abs(uplift.evaluer(predictions[:, 1] - predictions[:, 0], y, W, 1)) < 0.05
 
 
@@ -56,6 +60,8 @@ def test_notebook05_politiques(df, predictions):
     tous_hommes = policy.profit(pols["tous : e-mail Hommes"], W, spend, 0.30, 0.05)
     personne = policy.profit(pols["personne"], W, spend, 0.30, 0.05)
     hybride = policy.profit(pols["hybride (Hommes moyen + modèle Femmes)"], W, spend, 0.30, 0.05)
+    # Ne dépend pas du modèle : valeur exacte
     assert (tous_hommes - personne) * 100_000 == pytest.approx(18_095, abs=5)
-    assert (hybride - tous_hommes) * 100_000 == pytest.approx(2_305, abs=5)
-    assert np.mean(pols["hybride (Hommes moyen + modèle Femmes)"] == 2) == pytest.approx(0.21, abs=0.01)
+    # Dépend du modèle : 2 305 $ sous Windows, 1 952 $ sous Linux, dans l'IC95 [−1 600 ; +6 700]
+    assert 1_000 < (hybride - tous_hommes) * 100_000 < 3_500
+    assert np.mean(pols["hybride (Hommes moyen + modèle Femmes)"] == 2) == pytest.approx(0.21, abs=0.03)

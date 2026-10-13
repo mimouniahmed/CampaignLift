@@ -149,7 +149,8 @@ Notebook : [`notebooks/05_targeting_roi.ipynb`](../notebooks/05_targeting_roi.ip
 - **Package `campaignlift/`** : les briques stabilisées des notebooks, un module par étape (`data`, `experiment`, `power`, `uplift`, `policy`).
 - **Commande `campaignlift`** : rejoue l'analyse complète pour une marge et un coût d'envoi donnés.
 - **Notebooks autonomes** : ils restent indépendants du package, pour exposer chaque calcul de façon explicite.
-- **Cohérence garantie par les tests** : `tests/test_reproduction.py` vérifie que le package reproduit exactement les chiffres des notebooks (p du SRM = 0,904, |SMD| max = 0,0137, ATE, MDE, Qini 0,295, profit +18 095 $, gain de l'hybride +2 305 $).
+- **Cohérence garantie par les tests** : `tests/test_reproduction.py` vérifie que le package reproduit les chiffres des notebooks (p du SRM = 0,904, |SMD| max = 0,0137, ATE, MDE, profit +18 095 $ à l'identique ; Qini et gain de l'hybride avec tolérance).
+- **Portabilité** : les quantités issues de XGBoost varient légèrement selon la plateforme, à cause des arrondis flottants en calcul multithread. Le Qini de l'e-mail Femmes vaut 0,295 sous Windows et 0,290 sous Linux, et le gain de l'hybride 2 305 $ contre 1 952 $. Ces écarts restent dans les intervalles de confiance et ne changent aucune conclusion. Les tests de reproduction vérifient donc ces quantités avec une tolérance, et les autres à l'identique.
 - **Tests unitaires sur données synthétiques** :
   - z-test identique à `statsmodels` ;
   - bootstrap cohérent avec Welch ;

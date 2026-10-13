@@ -44,7 +44,7 @@ Hypothèses de la recommandation : 30 % de marge et 0,05 $ par e-mail. Ces hypot
   - évaluation hors politique (estimateur IPW de Hájek) sur les données randomisées ;
   - comparaison de politiques par bootstrap apparié, analyse de sensibilité marge × coût ;
   - calcul du coût de la preuve pour la personnalisation.
-- **Industrialisation** : package Python, commande en ligne, 17 tests (unitaires et reproduction exacte des résultats des notebooks), intégration continue GitHub Actions.
+- **Industrialisation** : package Python, commande en ligne, 17 tests (unitaires et reproduction des résultats des notebooks), intégration continue GitHub Actions.
 
 ## Données
 
