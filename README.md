@@ -2,6 +2,7 @@
 
 [![tests](https://github.com/mimouniahmed/CampaignLift/actions/workflows/tests.yml/badge.svg)](https://github.com/mimouniahmed/CampaignLift/actions/workflows/tests.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **Français** · [English](README.en.md)
 
@@ -123,3 +124,7 @@ Python 3.12 · pandas · NumPy · SciPy · statsmodels · scikit-learn · XGBoos
 ## Auteur
 
 **Ahmed Mimouni** — [github.com/mimouniahmed](https://github.com/mimouniahmed)
+
+## Licence
+
+Distribué sous licence [MIT](LICENSE). Le jeu de données Hillstrom est public et n'est pas redistribué dans ce dépôt.

@@ -2,6 +2,7 @@
 
 [![tests](https://github.com/mimouniahmed/CampaignLift/actions/workflows/tests.yml/badge.svg)](https://github.com/mimouniahmed/CampaignLift/actions/workflows/tests.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 [Français](README.md) · **English**
 
@@ -125,3 +126,7 @@ Python 3.12 · pandas · NumPy · SciPy · statsmodels · scikit-learn · XGBoos
 ## Author
 
 **Ahmed Mimouni** — [github.com/mimouniahmed](https://github.com/mimouniahmed)
+
+## License
+
+Released under the [MIT License](LICENSE). The Hillstrom dataset is public and is not redistributed in this repository.
