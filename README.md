@@ -4,7 +4,7 @@
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-[Français](README.md) · **English**
+**English** · [Français](README.fr.md)
 
 End-to-end analysis of a **randomized marketing experiment on 64,000 customers**. The work runs from protocol validation to an **ROI-quantified targeting recommendation**, through A/B testing, power analysis and uplift modeling.
 

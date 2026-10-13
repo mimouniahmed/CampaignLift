@@ -4,7 +4,7 @@
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-**Français** · [English](README.en.md)
+[English](README.md) · **Français**
 
 Analyse de bout en bout d'une **expérience marketing randomisée sur 64 000 clients**. Le parcours va de la validation du protocole jusqu'à une **recommandation de ciblage chiffrée en ROI**, en passant par les tests A/B, l'analyse de puissance et les modèles d'uplift.
 
