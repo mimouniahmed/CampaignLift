@@ -23,4 +23,9 @@ jobs:
           mkdir -p data
           curl -fsSL -o data/hillstrom.csv "http://www.minethatdata.com/Kevin_Hillstrom_MineThatData_E-MailAnalytics_DataMiningChallenge_2008.03.20.csv"
       - name: Tests unitaires et de reproduction
-        run: pytest -v
+        run: |
+          set -o pipefail
+          pytest -v -rf --tb=line 2>&1 | tee pytest.log || {
+            grep -E "^(FAILED|ERROR)|Error" pytest.log | head -20 | sed 's/^/::error::/'
+            exit 1
+          }
