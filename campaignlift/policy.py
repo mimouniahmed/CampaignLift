@@ -1,4 +1,4 @@
-"""Politiques de ciblage, évaluation hors politique et profit (phase 5).
+"""Politiques de ciblage, évaluation hors politique et profit (notebook 05).
 
 Actions : 0 = aucun e-mail, 1 = e-mail Hommes, 2 = e-mail Femmes.
 """

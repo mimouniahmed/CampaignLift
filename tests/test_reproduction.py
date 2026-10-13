@@ -21,12 +21,12 @@ def predictions(df):
     return uplift.t_learner(X, W, Y["conversion"])
 
 
-def test_phase1_randomisation(df):
+def test_notebook01_randomisation(df):
     assert experiment.test_sample_ratio(df["segment"])["p_value"] == pytest.approx(0.904, abs=1e-3)
     assert experiment.equilibre_covariables(df).abs().max().max() == pytest.approx(0.0137, abs=1e-4)
 
 
-def test_phase2_effets_moyens(df):
+def test_notebook02_effets_moyens(df):
     effets = experiment.effets_moyens(df).set_index(["traitement", "metrique"])
     assert effets.loc[("Mens E-Mail", "spend"), "difference"] == pytest.approx(0.770, abs=1e-3)
     assert effets.loc[("Womens E-Mail", "spend"), "difference"] == pytest.approx(0.424, abs=1e-3)
@@ -34,20 +34,20 @@ def test_phase2_effets_moyens(df):
     assert effets["p_value"].max() < 0.01
 
 
-def test_phase3_mde(df):
+def test_notebook03_mde(df):
     controle = df[df["segment"] == CONTROLE]
     n = len(controle)
     assert power.mde(controle["conversion"], n) / controle["conversion"].mean() == pytest.approx(0.391, abs=0.005)
     assert power.mde(controle["spend"], n, binaire=False) == pytest.approx(0.326, abs=0.005)
 
 
-def test_phase4_qini(df, predictions):
+def test_notebook04_qini(df, predictions):
     W, y = codes_traitement(df), resultats(df)["conversion"]
     assert uplift.evaluer(predictions[:, 2] - predictions[:, 0], y, W, 2) == pytest.approx(0.295, abs=0.005)
     assert abs(uplift.evaluer(predictions[:, 1] - predictions[:, 0], y, W, 1)) < 0.05
 
 
-def test_phase5_politiques(df, predictions):
+def test_notebook05_politiques(df, predictions):
     W, spend = codes_traitement(df), resultats(df)["spend"]
     panier = panier_moyen(df)
     ate_hommes = spend[W == 1].mean() - spend[W == 0].mean()

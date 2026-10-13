@@ -1,4 +1,4 @@
-"""Modèles d'uplift en cross-fitting et évaluation par courbe de Qini (phase 4)."""
+"""Modèles d'uplift en cross-fitting et évaluation par courbe de Qini (notebook 04)."""
 
 import numpy as np
 import xgboost as xgb

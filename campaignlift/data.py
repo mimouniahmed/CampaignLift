@@ -42,7 +42,7 @@ def resultats(df):
 
 
 def panier_moyen(df):
-    """Dépense moyenne des acheteurs (le panier ne dépend pas du traitement, cf. phase 2)."""
+    """Dépense moyenne des acheteurs (le panier ne dépend pas du traitement, cf. notebook 02)."""
     return float(df.loc[df["conversion"] == 1, "spend"].mean())
 
 

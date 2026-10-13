@@ -1,4 +1,4 @@
-"""Contrôles de randomisation (phase 1) et tests de l'effet moyen (phase 2)."""
+"""Contrôles de randomisation (notebook 01) et tests de l'effet moyen (notebook 02)."""
 
 import numpy as np
 import pandas as pd

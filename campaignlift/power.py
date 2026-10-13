@@ -1,4 +1,4 @@
-"""Puissance, MDE et taille d'échantillon (phase 3).
+"""Puissance, MDE et taille d'échantillon (notebook 03).
 
 Formules corrigées : la formule « de manuel » à variances égales surestime la puissance pour les
 événements rares. Pour une proportion, on distingue la variance sous H0 (seuil de rejet, proportion
